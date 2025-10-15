@@ -3,14 +3,20 @@ import type { ReactElement } from "react";
 export function SidebarItem({
   text,
   icon,
+  isActive = false,
 }: {
   text: string;
   icon: ReactElement;
+  isActive?: boolean;
 }) {
   return (
-    <div className="flex text-gray-700 py-2 cursor-pointer hover:bg-grey-200 rounded max-w-48 pl-4 transition-all duration-300">
-      <div className="p-2">{icon}</div>
-      <div className="p-2">{text}</div>
+    <div className={`flex items-center py-3 px-4 transition-all duration-300 ${
+      isActive 
+        ? "text-white" 
+        : "text-gray-700"
+    }`}>
+      <div className="mr-3">{icon}</div>
+      <div className={`font-medium ${isActive ? "font-semibold" : ""}`}>{text}</div>
     </div>
   );
 }
