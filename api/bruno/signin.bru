@@ -1,0 +1,22 @@
+meta {
+  name: signin
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:3000/api/v1/signin
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "username": "vivek21",
+    "password": "viri21"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Share
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:3000/api/v1/neuro/share
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4YjQ3Yjk2ODZmNjMwODFiMjMyZDFmYiIsImlhdCI6MTc1NjY2MDE4NiwiZXhwIjoxNzU2NjYzNzg2fQ.oKbWxI-7dtUoRsZT3ESSyNbp-Qc03lTacY2G3ZlppxU
+}
+
+body:json {
+  {
+    "share":true
+  }
+}
+
+settings {
+  encodeUrl: true
+}
