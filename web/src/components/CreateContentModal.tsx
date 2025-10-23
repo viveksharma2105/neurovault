@@ -8,37 +8,67 @@ import axios from "axios";
 export function CreateContentModal({ open, onClose, onContentAdded }) {
   const titleRef = useRef<HTMLInputElement>(null);
   const linkRef = useRef<HTMLInputElement>(null);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedType, setSelectedType] = useState<"link" | "text">("link");
 
   async function handleSubmit() {
     setLoading(true);
     setError("");
     const title = titleRef.current?.value;
     const link = linkRef.current?.value;
+    const textContent = contentRef.current?.value;
 
-    if (!title || !link) {
-      setError("Please fill in all fields");
+    if (!title) {
+      setError("Please enter a title");
       setLoading(false);
       return;
     }
 
-    // Simple type detection
+    if (selectedType !== "text" && !link) {
+      setError("Please enter a link");
+      setLoading(false);
+      return;
+    }
+
+    if (selectedType === "text" && !textContent) {
+      setError("Please enter some content");
+      setLoading(false);
+      return;
+    }
+
+    // Determine type based on selection and link
     let type = "article";
-    if (link?.includes("youtube.com")) type = "video";
-    if (link?.includes("twitter.com") || link?.includes("x.com")) type = "image";
-    if (link?.includes("reddit.com")) type = "reddit";
+    
+    if (selectedType === "text") {
+      type = "text";
+    } else {
+      // Auto-detect for link type
+      if (link?.includes("youtube.com") || link?.includes("youtu.be")) type = "video";
+      else if (link?.includes("twitter.com") || link?.includes("x.com")) type = "image";
+      else if (link?.includes("reddit.com")) type = "reddit";
+    }
     
     try {
+      const payload: any = { 
+        title, 
+        type,
+        link: selectedType === "text" ? "" : link,
+        content: selectedType === "text" ? textContent : ""
+      };
+      
       await axios.post(
         BACKEND_URL + "/api/v1/content",
-        { title, link, type },
+        payload,
         { headers: { Authorization: localStorage.getItem("token") || "" } }
       );
       if (onContentAdded) onContentAdded();
       // Reset form
       if (titleRef.current) titleRef.current.value = "";
       if (linkRef.current) linkRef.current.value = "";
+      if (contentRef.current) contentRef.current.value = "";
+      setSelectedType("link");
       onClose();
     } catch (e: any) {
       setError(e?.response?.data?.message || "Failed to add content");
@@ -76,6 +106,44 @@ export function CreateContentModal({ open, onClose, onContentAdded }) {
 
         {/* Form */}
         <div className="p-6 space-y-5">
+          {/* Type Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Note Type <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedType("link")}
+                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-300 ${
+                  selectedType === "link"
+                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                    : "border-gray-200 hover:border-purple-300 text-gray-600"
+                }`}
+              >
+                <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                <span className="text-sm font-medium">Link</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setSelectedType("text")}
+                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-300 ${
+                  selectedType === "text"
+                    ? "border-green-500 bg-green-50 text-green-700"
+                    : "border-gray-200 hover:border-green-300 text-gray-600"
+                }`}
+              >
+                <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="text-sm font-medium">Text Note</span>
+              </button>
+            </div>
+          </div>
+
           {/* Title Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -89,25 +157,40 @@ export function CreateContentModal({ open, onClose, onContentAdded }) {
             />
           </div>
 
-          {/* Link Input */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Link <span className="text-red-500">*</span>
-            </label>
-            <input
-              ref={linkRef}
-              type="url"
-              placeholder="https://example.com"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-            />
-          </div>
+          {/* Conditional Content Based on Type */}
+          {selectedType === "text" ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Content <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                ref={contentRef}
+                rows={6}
+                placeholder="Write your note here..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 resize-none"
+              />
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Link <span className="text-red-500">*</span>
+                </label>
+                <input
+                  ref={linkRef}
+                  type="url"
+                  placeholder="https://example.com"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                />
+              </div>
 
-          {/* Type Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <p className="text-sm text-blue-800">
-              <span className="font-semibold">💡 Auto-detect:</span> We'll automatically detect if it's a YouTube video, Twitter post, Reddit post, or article.
-            </p>
-          </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-sm text-blue-800">
+                  <span className="font-semibold">💡 Auto-detect:</span> We'll automatically detect YouTube videos, Twitter posts, Reddit posts, or articles.
+                </p>
+              </div>
+            </>
+          )}
 
           {/* Error Message */}
           {error && (

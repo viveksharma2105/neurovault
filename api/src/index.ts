@@ -3,7 +3,7 @@ import z, { hash } from "zod"
 import jwt from "jsonwebtoken"
 import { random } from "./utils.js";
 import bcrypt from "bcrypt";
-import { contentModel, LinkModel, UserModel } from "./db.js";
+import { contentModel, LinkModel, UserModel, ContentShareModel } from "./db.js";
 import { JWT_PASSWORD } from "./config.js";
 import { userMiddleware } from "./middleware.js";
 import cors from "cors";
@@ -97,11 +97,13 @@ app.post("/api/v1/content",userMiddleware, async (req, res) => {
     const link = req.body.link;
     const type = req.body.type;
     const title = req.body.title;
+    const content = req.body.content;
 
     await contentModel.create({
       link,
       type,
       title,
+      content,
       //@ts-ignore
       userId: req.userId,
       tags:[]
@@ -122,6 +124,30 @@ app.get("/api/v1/content",userMiddleware, async (req, res) => {
     })
 })
 
+app.put("/api/v1/content/:id", userMiddleware, async (req, res) => {
+    const contentId = req.params.id;
+    const { title, link, type, content } = req.body;
+    
+    await contentModel.updateOne(
+      {
+        _id: contentId,
+        //@ts-ignore
+        userId: req.userId
+      },
+      {
+        $set: {
+          ...(title !== undefined && { title }),
+          ...(link !== undefined && { link }),
+          ...(type !== undefined && { type }),
+          ...(content !== undefined && { content })
+        }
+      }
+    );
+    res.json({
+      message: "Updated"
+    });
+});
+
 app.delete("/api/v1/content/:id", userMiddleware, async (req, res) => {
     const contentId = req.params.id;
     await contentModel.deleteOne({
@@ -135,37 +161,42 @@ app.delete("/api/v1/content/:id", userMiddleware, async (req, res) => {
 });
 
 app.post("/api/v1/neuro/share",userMiddleware, async (req, res) =>{
-const share = req.body.share;
-if (share) {
-  const existingLinks = await LinkModel.findOne({
-    //@ts-ignore
-    userId: req.userId
-  });
-  if (existingLinks) {
-     res.json({
-  hash: existingLinks.hash
-  })
-    return;
+  try {
+    const share = req.body.share;
+    if (share) {
+      const existingLinks = await LinkModel.findOne({
+        //@ts-ignore
+        userId: req.userId
+      });
+      if (existingLinks) {
+        res.json({
+          hash: existingLinks.hash
+        })
+        return;
+      }
+      const hash = random(10);
+      await LinkModel.create({
+        //@ts-ignore
+        userId: req.userId,
+        hash: hash
+      })
+      res.json({
+        hash: hash
+      })
+    } else {
+      await LinkModel.deleteOne({
+        //@ts-ignore
+        userId: req.userId
+      });
+      res.json({
+        message: "Removed link"
+      })
+    }
+  } catch (e) {
+    res.status(500).json({
+      message: "Failed to create share link"
+    })
   }
-  const hash = random(10);
-  await LinkModel.create({
-    //@ts-ignore
-    userId: req.userId,
-    hash: hash
-  })
- 
-}else{
-  await LinkModel.deleteOne({
-    //@ts-ignore
-    userId: req.userId
-  });
-  res.json({
-    message: "Removed link"
-  })
-}
-
-
-
 })
 
 app.get("/api/v1/neuro/:shareLink", async (req, res) =>{
@@ -197,6 +228,91 @@ app.get("/api/v1/neuro/:shareLink", async (req, res) =>{
       content: content
     })
 })
+
+// Share single content
+app.post("/api/v1/content/:id/share", userMiddleware, async (req, res) => {
+  try {
+    const contentId = req.params.id;
+    
+    // Verify content exists and belongs to user
+    const content = await contentModel.findOne({
+      _id: contentId,
+      //@ts-ignore
+      userId: req.userId
+    });
+    
+    if (!content) {
+      return res.status(404).json({
+        message: "Content not found"
+      });
+    }
+    
+    // Check if already shared
+    const existingShare = await ContentShareModel.findOne({
+      contentId: contentId
+    });
+    
+    if (existingShare) {
+      return res.json({
+        hash: existingShare.hash
+      });
+    }
+    
+    // Create new share
+    const hash = random(10);
+    await ContentShareModel.create({
+      hash: hash,
+      contentId: contentId,
+      //@ts-ignore
+      userId: req.userId
+    });
+    
+    res.json({
+      hash: hash
+    });
+  } catch (e) {
+    res.status(500).json({
+      message: "Failed to create share link"
+    });
+  }
+});
+
+// Get single shared content
+app.get("/api/v1/content/shared/:shareLink", async (req, res) => {
+  try {
+    const hash = req.params.shareLink;
+    const share = await ContentShareModel.findOne({ hash });
+    
+    if (!share) {
+      return res.status(404).json({
+        message: "Shared content not found"
+      });
+    }
+    
+    const content = await contentModel.findById(share.contentId);
+    if (!content) {
+      return res.status(404).json({
+        message: "Content not found"
+      });
+    }
+    
+    const user = await UserModel.findById(share.userId);
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+    
+    res.json({
+      username: user.username,
+      content: content
+    });
+  } catch (e) {
+    res.status(500).json({
+      message: "Failed to load shared content"
+    });
+  }
+});
 
 
 app.listen(3000);

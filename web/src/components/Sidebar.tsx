@@ -15,6 +15,11 @@ export function Sidebar({ onFilter }: { onFilter?: (type: string) => void }) {
     onFilter && onFilter(type);
   };
 
+  // NOTE: This sidebar component has hardcoded filter types (twitter, youtube, reddit, document, links)
+  // The actual content types in the database are: ['image', 'video', 'article', 'audio', 'text', 'reddit']
+  // TODO: Update sidebar filters to match actual content types or make it dynamic based on content types
+  // Current implementation may not filter correctly for some content types
+
   return (
     <div className="h-screen bg-gradient-to-b from-white to-purple-50 border-r border-gray-200 w-72 fixed left-0 top-0 shadow-xl z-50 hidden lg:block">
       {/* Logo Section */}

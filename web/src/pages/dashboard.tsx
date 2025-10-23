@@ -40,13 +40,7 @@ export function Dashboard() {
     fetchContent();
   }, []);
 
-  useEffect(() => {
-    // Reload Twitter widgets after content changes
-    if ((window as any).twttr?.widgets) {
-      (window as any).twttr.widgets.load();
-    }
-  }, [content]);
-
+ 
   async function handleShare() {
     setShareLoading(true);
     setShareLink("");
@@ -56,7 +50,7 @@ export function Dashboard() {
         { share: true },
         { headers: { Authorization: localStorage.getItem("token") || "" } }
       );
-      setShareLink(window.location.origin + "/api/v1/neuro/" + res.data.hash);
+      setShareLink(window.location.origin + "/shared/" + res.data.hash);
       setShowShareModal(true);
     } catch (e: any) {
       setError("Failed to share");
@@ -69,6 +63,7 @@ export function Dashboard() {
     setFilter(type);
   }
 
+  
   const filteredContent = filter === "all"
     ? content
     : content.filter((item: any) => {
@@ -107,6 +102,21 @@ export function Dashboard() {
       );
     } catch (e: any) {
       setError("Failed to update content");
+    }
+  }
+
+  async function handleShareSingleContent(id: string) {
+    try {
+      const res = await axios.post(
+        BACKEND_URL + "/api/v1/content/" + id + "/share",
+        {},
+        { headers: { Authorization: localStorage.getItem("token") || "" } }
+      );
+      const singleShareLink = window.location.origin + "/note/" + res.data.hash;
+      copyToClipboard(singleShareLink);
+      alert("Share link copied to clipboard!");
+    } catch (e: any) {
+      setError("Failed to share content");
     }
   }
 
@@ -226,6 +236,7 @@ export function Dashboard() {
                   item={item}
                   onDelete={() => handleDeleteContent(item._id)}
                   onEdit={(newTitle) => handleEditContent(item._id, newTitle)}
+                  onShare={() => handleShareSingleContent(item._id)}
                 />
               ))}
             </div>
@@ -264,7 +275,7 @@ export function Dashboard() {
 }
 
 // Modern Note Card Component
-function NoteCard({ item, onDelete, onEdit }: { item: any; onDelete: () => void; onEdit: (newTitle: string) => void }) {
+function NoteCard({ item, onDelete, onEdit, onShare }: { item: any; onDelete: () => void; onEdit: (newTitle: string) => void; onShare: () => void }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(item.title || "Untitled");
@@ -341,6 +352,15 @@ function NoteCard({ item, onDelete, onEdit }: { item: any; onDelete: () => void;
                   </svg>
                 </button>
                 <button
+                  onClick={onShare}
+                  className="text-gray-400 hover:text-green-500 transition-colors duration-300 p-1"
+                  aria-label="Share"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                </button>
+                <button
                   onClick={onDelete}
                   className="text-gray-400 hover:text-red-500 transition-colors duration-300 p-1"
                   aria-label="Delete"
@@ -360,7 +380,8 @@ function NoteCard({ item, onDelete, onEdit }: { item: any; onDelete: () => void;
             item.type === "video" ? "bg-red-100 text-red-800" :
             item.type === "image" ? "bg-blue-100 text-blue-800" :
             item.type === "reddit" ? "bg-orange-100 text-orange-800" :
-            item.type === "article" ? "bg-green-100 text-green-800" :
+            item.type === "text" ? "bg-green-100 text-green-800" :
+            item.type === "article" ? "bg-teal-100 text-teal-800" :
             "bg-purple-100 text-purple-800"
           }`}>
             {item.type || "note"}
@@ -370,6 +391,7 @@ function NoteCard({ item, onDelete, onEdit }: { item: any; onDelete: () => void;
 
       {/* Card Content Preview */}
       <div className="p-5">
+        {/* YouTube Video */}
         {item.type === "video" && item.link && (
           <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-3">
             <iframe
@@ -383,6 +405,7 @@ function NoteCard({ item, onDelete, onEdit }: { item: any; onDelete: () => void;
           </div>
         )}
 
+        {/* Twitter/X Post */}
         {item.type === "image" && item.link && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg overflow-hidden mb-3">
             <blockquote className="twitter-tweet" data-theme="light">
@@ -391,6 +414,7 @@ function NoteCard({ item, onDelete, onEdit }: { item: any; onDelete: () => void;
           </div>
         )}
 
+        {/* Reddit Post */}
         {item.type === "reddit" && item.link && (
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
             <div className="flex items-center space-x-2 text-orange-700">
@@ -398,6 +422,27 @@ function NoteCard({ item, onDelete, onEdit }: { item: any; onDelete: () => void;
                 <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
               </svg>
               <span className="text-sm font-medium">Reddit Post</span>
+            </div>
+          </div>
+        )}
+
+        {/* Text Note */}
+        {item.type === "text" && item.content && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-3">
+            <p className="text-gray-700 text-sm whitespace-pre-wrap line-clamp-4">
+              {item.content}
+            </p>
+          </div>
+        )}
+
+        {/* Article/Link Preview */}
+        {item.type === "article" && item.link && (
+          <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 mb-3">
+            <div className="flex items-center space-x-2 text-teal-700">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="text-sm font-medium">Article</span>
             </div>
           </div>
         )}
@@ -417,15 +462,22 @@ function NoteCard({ item, onDelete, onEdit }: { item: any; onDelete: () => void;
 
       {/* Card Footer with Actions */}
       <div className={`px-5 pb-5 flex gap-2 transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-        <a
-          href={item.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 px-3 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors duration-300 text-sm font-medium text-center"
-        >
-          Open
-        </a>
+        {item.link && (
+          <a
+            href={item.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 px-3 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors duration-300 text-sm font-medium text-center"
+          >
+            Open
+          </a>
+        )}
         <button
+          onClick={() => {
+            const shareUrl = item.link || window.location.href;
+            navigator.clipboard.writeText(shareUrl);
+            alert("Link copied to clipboard!");
+          }}
           className="px-3 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors duration-300"
           aria-label="Share"
         >
