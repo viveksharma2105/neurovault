@@ -1,5 +1,5 @@
 import express from "express";
-import z, { hash } from "zod"
+import z from "zod"
 import jwt from "jsonwebtoken"
 import { random } from "./utils.js";
 import bcrypt from "bcrypt";
@@ -12,7 +12,13 @@ import cors from "cors";
 
 const app = express();
 app.use(express.json());
-app.use(cors())
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production' 
+      ? ["https://neurovault.vercel.app"]
+      : ["http://localhost:5173", "http://localhost:3000", "https://neurovault.vercel.app"], 
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+  }))
 
 
 const authSchema = z.object({
@@ -77,7 +83,7 @@ app.post("/api/v1/signin", async (req, res) => {
     const token = jwt.sign(
       { id: existingUser._id },
       JWT_PASSWORD,
-      { expiresIn: "1h" } 
+      { expiresIn: "30d" } 
     );
 
     res.json({ token });
