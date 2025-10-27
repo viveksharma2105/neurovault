@@ -122,7 +122,7 @@ export function Dashboard() {
 
   function handleLogout() {
     localStorage.removeItem("token");
-    navigate("/signin");
+    navigate("/");
   }
 
   function copyToClipboard(text: string) {
