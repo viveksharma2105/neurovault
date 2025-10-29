@@ -14,7 +14,7 @@ const app = express();
 app.use(express.json());
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-      ? ["https://neurovault.vercel.app"]
+      ? ["https://neurovault-phi.vercel.app"]
       : ["http://localhost:5173", "http://localhost:3000", "https://neurovault.vercel.app"], 
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
