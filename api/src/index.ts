@@ -3,6 +3,7 @@ import z from "zod"
 import jwt from "jsonwebtoken"
 import { random } from "./utils.js";
 import bcrypt from "bcrypt";
+import mongoose from "mongoose";
 import { contentModel, LinkModel, UserModel, ContentShareModel } from "./db.js";
 import { JWT_PASSWORD } from "./config.js";
 import { userMiddleware } from "./middleware.js";
@@ -129,6 +130,110 @@ app.get("/api/v1/content",userMiddleware, async (req, res) => {
       content
     })
 })
+
+// Enhanced search endpoint with aggregation
+app.get("/api/v1/content/search", userMiddleware, async (req, res) => {
+  try {
+    //@ts-ignore
+    const userId = req.userId;
+    const { search, type, sortBy = 'createdAt', order = 'desc' } = req.query;
+
+    // Build aggregation pipeline
+    const pipeline: any[] = [
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } }
+    ];
+
+    // Filter by type
+    if (type && type !== 'all') {
+      pipeline.push({ $match: { type } });
+    }
+
+    // Search in title and content
+    if (search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { title: { $regex: search, $options: 'i' } },
+            { content: { $regex: search, $options: 'i' } }
+          ]
+        }
+      });
+    }
+
+    // Sort
+    const sortOrder = order === 'desc' ? -1 : 1;
+    pipeline.push({ $sort: { [sortBy as string]: sortOrder } });
+
+    // Populate user info
+    pipeline.push({
+      $lookup: {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user'
+      }
+    });
+
+    pipeline.push({
+      $unwind: {
+        path: '$user',
+        preserveNullAndEmptyArrays: true
+      }
+    });
+
+    const content = await contentModel.aggregate(pipeline);
+
+    res.json({ 
+      content,
+      count: content.length 
+    });
+  } catch (e) {
+    console.error('Search error:', e);
+    res.status(500).json({ message: "Failed to search content" });
+  }
+});
+
+// Analytics endpoint
+app.get("/api/v1/analytics", userMiddleware, async (req, res) => {
+  try {
+    //@ts-ignore
+    const userId = req.userId;
+
+    // Get content by type
+    const contentByType = await contentModel.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      { 
+        $group: {
+          _id: "$type",
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]);
+
+    // Total content count
+    const totalContent = await contentModel.countDocuments({ 
+      userId: new mongoose.Types.ObjectId(userId) 
+    });
+
+    // Content created this week
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const weeklyContent = await contentModel.countDocuments({
+      userId: new mongoose.Types.ObjectId(userId),
+      createdAt: { $gte: oneWeekAgo }
+    });
+
+    res.json({
+      totalContent,
+      weeklyContent,
+      contentByType
+    });
+  } catch (e) {
+    console.error('Analytics error:', e);
+    res.status(500).json({ message: "Failed to fetch analytics" });
+  }
+});
 
 app.put("/api/v1/content/:id", userMiddleware, async (req, res) => {
     const contentId = req.params.id;

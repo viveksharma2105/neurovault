@@ -6,9 +6,16 @@ import { PlusIcon } from "../icons/PlusIcon";
 import { ShareIcone } from "../icons/ShareIcon";
 import { CreateContentModal } from "../components/CreateContentModal";
 import { Sidebar } from "../components/Sidebar";
+import { SearchBar } from "../components/SearchBar";
 import { BACKEND_URL } from "../config";
 import axios from "axios";
 import { LogoGifIcon } from "../icons/LogoIcon";
+
+interface Analytics {
+  totalContent: number;
+  weeklyContent: number;
+  contentByType: { _id: string; count: number }[];
+}
 
 export function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -19,6 +26,7 @@ export function Dashboard() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [showShareModal, setShowShareModal] = useState(false);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const navigate = useNavigate();
 
   async function fetchContent() {
@@ -36,8 +44,47 @@ export function Dashboard() {
     }
   }
 
+  async function fetchAnalytics() {
+    try {
+      const res = await axios.get(BACKEND_URL + "/api/v1/analytics", {
+        headers: { Authorization: localStorage.getItem("token") || "" },
+      });
+      setAnalytics(res.data);
+    } catch (e: any) {
+      console.error("Failed to fetch analytics");
+    }
+  }
+
+  async function handleSearch(query: string, type: string, sortBy: string) {
+    setLoading(true);
+    setError("");
+    try {
+      const params = new URLSearchParams();
+      if (query) params.append("search", query);
+      if (type !== "all") params.append("type", type);
+      params.append("sortBy", sortBy);
+      
+      // For title sorting, use ascending order (A-Z), for dates use descending (newest first)
+      const order = sortBy === "title" ? "asc" : "desc";
+      params.append("order", order);
+
+      const res = await axios.get(
+        BACKEND_URL + "/api/v1/content/search?" + params.toString(),
+        {
+          headers: { Authorization: localStorage.getItem("token") || "" },
+        }
+      );
+      setContent(res.data.content || []);
+    } catch (e: any) {
+      setError("Search failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     fetchContent();
+    fetchAnalytics();
   }, []);
 
  
@@ -61,19 +108,20 @@ export function Dashboard() {
 
   function handleSidebarFilter(type: string) {
     setFilter(type);
+    // Convert sidebar filter to content type
+    let contentType = "all";
+    if (type === "twitter") contentType = "image";
+    else if (type === "youtube") contentType = "video";
+    else if (type === "reddit") contentType = "reddit";
+    else if (type === "document") contentType = "article";
+    else if (type === "links") contentType = "audio";
+    else contentType = type;
+    
+    handleSearch("", contentType, "createdAt");
   }
 
-  
-  const filteredContent = filter === "all"
-    ? content
-    : content.filter((item: any) => {
-        if (filter === "twitter") return item.type === "image";
-        if (filter === "youtube") return item.type === "video";
-        if (filter === "reddit") return item.type === "reddit";
-        if (filter === "document") return item.type === "article";
-        if (filter === "links") return item.type === "audio";
-        return true;
-      });
+  // Display all content (search API handles filtering now)
+  const filteredContent = content;
 
   async function handleDeleteContent(id: string) {
     if (!confirm("Are you sure you want to delete this note?")) return;
@@ -83,6 +131,7 @@ export function Dashboard() {
         headers: { Authorization: localStorage.getItem("token") || "" },
       });
       setContent((prev) => prev.filter((item: any) => item._id !== id));
+      fetchAnalytics(); // Refresh analytics after delete
     } catch (e: any) {
       setError("Failed to delete content");
     }
@@ -166,8 +215,28 @@ export function Dashboard() {
           <CreateContentModal
             open={modalOpen}
             onClose={() => setModalOpen(false)}
-            onContentAdded={fetchContent}
+            onContentAdded={() => {
+              fetchContent();
+              fetchAnalytics();
+            }}
           />
+
+          {/* Analytics Cards */}
+          {analytics && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+                <h3 className="text-sm font-medium text-gray-600 mb-1">Total Notes</h3>
+                <p className="text-3xl font-bold text-purple-600">{analytics.totalContent}</p>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-cyan-500">
+                <h3 className="text-sm font-medium text-gray-600 mb-1">Content Types</h3>
+                <p className="text-3xl font-bold text-cyan-600">{analytics.contentByType?.length || 0}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Search Bar */}
+          <SearchBar onSearch={handleSearch} />
 
           {/* Action Bar */}
           <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
