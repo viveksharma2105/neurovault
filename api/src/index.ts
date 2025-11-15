@@ -10,7 +10,6 @@ import { userMiddleware } from "./middleware.js";
 import cors from "cors";
 
 
-
 const app = express();
 app.use(express.json());
 app.use(cors({
@@ -216,17 +215,8 @@ app.get("/api/v1/analytics", userMiddleware, async (req, res) => {
       userId: new mongoose.Types.ObjectId(userId) 
     });
 
-    // Content created this week
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    const weeklyContent = await contentModel.countDocuments({
-      userId: new mongoose.Types.ObjectId(userId),
-      createdAt: { $gte: oneWeekAgo }
-    });
-
     res.json({
       totalContent,
-      weeklyContent,
       contentByType
     });
   } catch (e) {

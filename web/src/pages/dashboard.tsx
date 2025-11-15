@@ -13,7 +13,6 @@ import { LogoGifIcon } from "../icons/LogoIcon";
 
 interface Analytics {
   totalContent: number;
-  weeklyContent: number;
   contentByType: { _id: string; count: number }[];
 }
 
