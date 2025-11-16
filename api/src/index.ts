@@ -144,7 +144,16 @@ app.get("/api/v1/content/search", userMiddleware, async (req, res) => {
 
     // Filter by type
     if (type && type !== 'all') {
-      pipeline.push({ $match: { type } });
+      if (type === 'links') {
+        // "links" means all types EXCEPT text
+        pipeline.push({ 
+          $match: { 
+            type: { $in: ['video', 'image', 'article', 'reddit', 'audio'] } 
+          } 
+        });
+      } else {
+        pipeline.push({ $match: { type } });
+      }
     }
 
     // Search in title and content

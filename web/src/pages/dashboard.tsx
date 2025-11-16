@@ -113,7 +113,7 @@ export function Dashboard() {
     else if (type === "youtube") contentType = "video";
     else if (type === "reddit") contentType = "reddit";
     else if (type === "document") contentType = "article";
-    else if (type === "links") contentType = "audio";
+    else if (type === "links") contentType = "links"; // All URLs except text
     else contentType = type;
     
     handleSearch("", contentType, "createdAt");

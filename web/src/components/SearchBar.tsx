@@ -43,12 +43,12 @@ export function SearchBar({ onSearch }: SearchBarProps) {
         className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white cursor-pointer"
       >
         <option value="all">All Types</option>
-        <option value="image">Images</option>
-        <option value="video">Videos</option>
-        <option value="article">Articles</option>
-        <option value="audio">Audio</option>
-        <option value="text">Text</option>
-        <option value="reddit">Reddit</option>
+        <option value="links">🔗 Links (All URLs)</option>
+        <option value="text">📝 Text Notes</option>
+        <option value="video">🎥 Videos</option>
+        <option value="image">🐦 Tweets</option>
+        <option value="reddit">🔴 Reddit</option>
+        <option value="article">📄 Articles</option>
       </select>
 
       {/* Sort By */}
