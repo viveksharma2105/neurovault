@@ -1,5 +1,4 @@
 import express from "express";
-import "./types.js";
 import z from "zod"
 import jwt from "jsonwebtoken"
 import { random } from "./utils.js";
