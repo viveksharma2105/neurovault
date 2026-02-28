@@ -44,7 +44,7 @@ app.post("/api/v1/signup", async (req, res) => {
     res.json({
       message: "User signed up",
     });
-  } catch (e) {
+  } catch (e: any) {
     
     if (e instanceof z.ZodError) {
       return res.status(400).json({
@@ -53,10 +53,16 @@ app.post("/api/v1/signup", async (req, res) => {
       });
     }
 
-    
+    // MongoDB duplicate key error (code 11000)
+    if (e?.code === 11000) {
+      return res.status(409).json({
+        message: "User already exists",
+      });
+    }
+
     console.error("Signup error:", e);
-    res.status(409).json({
-      message: "User already exists",
+    res.status(500).json({
+      message: "Something went wrong, please try again",
     });
   }
 });
