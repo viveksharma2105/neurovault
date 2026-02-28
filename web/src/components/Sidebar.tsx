@@ -7,138 +7,96 @@ import { YoutubeGifIcon } from "../icons/YouTubeIcon";
 import { RedditGifIcon } from "../icons/RedditIcon";
 import { SidebarItem } from "./SidebarItem";
 
-export function Sidebar({ onFilter }: { onFilter?: (type: string) => void }) {
+interface SidebarProps {
+  onFilter?: (type: string) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+const filters = [
+  { type: "all", label: "All Notes", icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zm0 9.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zm9.75-9.75A2.25 2.25 0 0115.75 3.75H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zm0 9.75a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 15.75V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg> },
+  { type: "twitter", label: "Twitter", icon: <TwitterGifIcon /> },
+  { type: "youtube", label: "YouTube", icon: <YoutubeGifIcon /> },
+  { type: "reddit", label: "Reddit", icon: <RedditGifIcon /> },
+  { type: "document", label: "Documents", icon: <DocumentGifIcon /> },
+  { type: "links", label: "Links", icon: <LinkGifIcon /> },
+];
+
+export function Sidebar({ onFilter, isOpen, onClose }: SidebarProps) {
   const [activeFilter, setActiveFilter] = useState("all");
 
   const handleFilterClick = (type: string) => {
     setActiveFilter(type);
     onFilter && onFilter(type);
+    onClose && onClose();
   };
 
-  // NOTE: This sidebar component has hardcoded filter types (twitter, youtube, reddit, document, links)
-  // The actual content types in the database are: ['image', 'video', 'article', 'audio', 'text', 'reddit']
-  // TODO: Update sidebar filters to match actual content types or make it dynamic based on content types
-  // Current implementation may not filter correctly for some content types
-
   return (
-    <div className="h-screen bg-gradient-to-b from-white to-purple-50 border-r border-gray-200 w-72 fixed left-0 top-0 shadow-xl z-50 hidden lg:block">
-      {/* Logo Section */}
-      <div className="flex items-center gap-3 text-2xl p-6 border-b border-gray-200">
-        <LogoGifIcon />
-        <span className="font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-          NeuroVault
-        </span>
-      </div>
-
-      {/* Navigation Section */}
-      <div className="p-4 space-y-2">
-        <div className="mb-6 mt-2">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">
-            Filter by Type
-          </h3>
-        </div>
-
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
         <div
-          onClick={() => handleFilterClick("all")}
-          className={`cursor-pointer transition-all duration-300 rounded-xl ${
-            activeFilter === "all"
-              ? "bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg scale-105"
-              : "hover:bg-gray-100"
-          }`}
-        >
-          <SidebarItem 
-            text="All Notes" 
-            icon={<LogoGifIcon />} 
-            isActive={activeFilter === "all"}
-          />
+          className="fixed inset-0 bg-surface-950/50 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed top-0 left-0 h-screen w-64 bg-white border-r border-surface-200 z-50
+          transition-transform duration-300 ease-out
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0
+        `}
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 h-16 px-5 border-b border-surface-200">
+          <LogoGifIcon />
+          <span className="text-lg font-bold text-surface-900 tracking-tight">
+            Neuro<span className="text-brand-600">Vault</span>
+          </span>
         </div>
 
-        <div
-          onClick={() => handleFilterClick("twitter")}
-          className={`cursor-pointer transition-all duration-300 rounded-xl ${
-            activeFilter === "twitter"
-              ? "bg-gradient-to-r from-blue-400 to-blue-600 shadow-lg scale-105"
-              : "hover:bg-gray-100"
-          }`}
-        >
-          <SidebarItem 
-            text="Twitter" 
-            icon={<TwitterGifIcon />} 
-            isActive={activeFilter === "twitter"}
-          />
-        </div>
-
-        <div
-          onClick={() => handleFilterClick("youtube")}
-          className={`cursor-pointer transition-all duration-300 rounded-xl ${
-            activeFilter === "youtube"
-              ? "bg-gradient-to-r from-red-400 to-red-600 shadow-lg scale-105"
-              : "hover:bg-gray-100"
-          }`}
-        >
-          <SidebarItem 
-            text="YouTube" 
-            icon={<YoutubeGifIcon />} 
-            isActive={activeFilter === "youtube"}
-          />
-        </div>
-
-        <div
-          onClick={() => handleFilterClick("reddit")}
-          className={`cursor-pointer transition-all duration-300 rounded-xl ${
-            activeFilter === "reddit"
-              ? "bg-gradient-to-r from-orange-400 to-orange-600 shadow-lg scale-105"
-              : "hover:bg-gray-100"
-          }`}
-        >
-          <SidebarItem 
-            text="Reddit" 
-            icon={<RedditGifIcon />} 
-            isActive={activeFilter === "reddit"}
-          />
-        </div>
-
-        <div
-          onClick={() => handleFilterClick("document")}
-          className={`cursor-pointer transition-all duration-300 rounded-xl ${
-            activeFilter === "document"
-              ? "bg-gradient-to-r from-green-400 to-green-600 shadow-lg scale-105"
-              : "hover:bg-gray-100"
-          }`}
-        >
-          <SidebarItem 
-            text="Documents" 
-            icon={<DocumentGifIcon />} 
-            isActive={activeFilter === "document"}
-          />
-        </div>
-
-        <div
-          onClick={() => handleFilterClick("links")}
-          className={`cursor-pointer transition-all duration-300 rounded-xl ${
-            activeFilter === "links"
-              ? "bg-gradient-to-r from-teal-400 to-teal-600 shadow-lg scale-105"
-              : "hover:bg-gray-100"
-          }`}
-        >
-          <SidebarItem 
-            text="Links" 
-            icon={<LinkGifIcon />} 
-            isActive={activeFilter === "links"}
-          />
-        </div>
-      </div>
-
-      {/* Bottom Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200 bg-white/50 backdrop-blur-sm">
-        <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-4">
-          <p className="text-sm text-gray-700 font-medium mb-1">💡 Pro Tip</p>
-          <p className="text-xs text-gray-600">
-            Use filters to organize your notes by type
+        {/* Filters */}
+        <div className="p-3 mt-2">
+          <p className="text-[11px] font-semibold text-surface-400 uppercase tracking-wider px-3 mb-2">
+            Filter by type
           </p>
+
+          <div className="space-y-0.5">
+            {filters.map(({ type, label, icon }) => (
+              <div
+                key={type}
+                onClick={() => handleFilterClick(type)}
+                className={`
+                  cursor-pointer rounded-xl transition-all duration-200
+                  ${activeFilter === type
+                    ? "bg-brand-50 border border-brand-200"
+                    : "hover:bg-surface-50 border border-transparent"
+                  }
+                `}
+              >
+                <SidebarItem
+                  text={label}
+                  icon={icon}
+                  isActive={activeFilter === type}
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </div>
+
+        {/* Bottom tip */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-surface-200 bg-surface-50/50">
+          <div className="bg-brand-50 border border-brand-100 rounded-xl p-3">
+            <p className="text-xs font-medium text-brand-700 mb-0.5">Pro Tip</p>
+            <p className="text-[11px] text-brand-600/70">
+              Use filters to organize your notes by type
+            </p>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }
-

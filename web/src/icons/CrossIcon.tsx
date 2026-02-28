@@ -1,4 +1,4 @@
-import { iconSizeVarients, type IconProps } from ".";
+import { iconSizeVariants, type IconProps } from ".";
 
 export const CrossIcon = (props: IconProps) => {
   return (
@@ -6,13 +6,13 @@ export const CrossIcon = (props: IconProps) => {
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
-      stroke-width="1.5"
+      strokeWidth="1.5"
       stroke="currentColor"
-      className={iconSizeVarients[props.size]}
+      className={iconSizeVariants[props.size]}
     >
       <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         d="M6 18 18 6M6 6l12 12"
       />
     </svg>

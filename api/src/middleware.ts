@@ -4,15 +4,20 @@ import { JWT_PASSWORD } from "./config.js";
 
 
 export const userMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    const header = req.headers["authorization"];
-    const decoded = jwt.verify(header as string, JWT_PASSWORD);
-    if (decoded) {
-        //@ts-ignore
-        req.userId  = decoded.id;
+    try {
+        const header = req.headers["authorization"];
+        if (!header) {
+            res.status(403).json({ message: "You are not logged in" });
+            return;
+        }
+
+        // Support both "Bearer <token>" and raw token formats
+        const token = header.startsWith("Bearer ") ? header.slice(7) : header;
+        const decoded = jwt.verify(token, JWT_PASSWORD) as { id: string };
+
+        req.userId = decoded.id;
         next();
-    }else{
-        res.status(403).json({
-            message: "You are not loggedIn"
-        })
+    } catch (e) {
+        res.status(403).json({ message: "Invalid or expired token" });
     }
 };

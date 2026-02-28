@@ -18,7 +18,6 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Reset form when modal opens/closes or mode switches
   useEffect(() => {
     if (isOpen) {
       setError("");
@@ -27,21 +26,21 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
     }
   }, [isOpen, mode]);
 
-  // Handle Enter key press
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === "Enter" && isOpen && !loading) {
         handleSubmit();
       }
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
     };
-
     if (isOpen) {
       document.addEventListener("keydown", handleKeyPress);
       return () => document.removeEventListener("keydown", handleKeyPress);
     }
   }, [isOpen, loading, mode]);
 
-  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -68,21 +67,13 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
 
     try {
       if (mode === "signin") {
-        const res = await axios.post(BACKEND_URL + "/api/v1/signin", {
-          username,
-          password,
-        });
+        const res = await axios.post(BACKEND_URL + "/api/v1/signin", { username, password });
         localStorage.setItem("token", res.data.token);
         window.location.href = "/dashboard";
       } else {
-        await axios.post(BACKEND_URL + "/api/v1/signup", {
-          username,
-          password,
-        });
+        await axios.post(BACKEND_URL + "/api/v1/signup", { username, password });
         setSuccess(true);
-        setTimeout(() => {
-          onSwitchMode();
-        }, 2000);
+        setTimeout(() => onSwitchMode(), 2000);
       }
     } catch (e: any) {
       setError(e?.response?.data?.message || `${mode === "signin" ? "Sign in" : "Sign up"} failed`);
@@ -95,112 +86,112 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
 
   return (
     <>
-      {/* Backdrop with blur */}
+      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 animate-fadeIn"
+        className="fixed inset-0 bg-surface-950/60 backdrop-blur-sm z-50 animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="relative w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-100 p-8 pointer-events-auto animate-modalSlideIn"
+          className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-surface-200 pointer-events-auto animate-slide-up"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Close Button */}
+          {/* Close */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="Close modal"
+            className="absolute top-4 right-4 p-1.5 text-surface-400 hover:text-surface-600 hover:bg-surface-100 rounded-lg transition-all duration-200"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
-          {/* Logo and Heading */}
-          <div className="flex flex-col items-center mb-6">
-            <div className="mb-3">
-              <LogoGifIcon />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">
-              {mode === "signin" ? "Welcome Back" : "Create Account"}
-            </h2>
-            <p className="text-gray-600 text-center text-sm">
-              {mode === "signin" ? "Sign in to access your vault" : "Join NeuroVault today"}
-            </p>
-          </div>
-
-          {/* Form */}
-          <div className="space-y-4">
-            {/* Username Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-              <input
-                ref={usernameRef}
-                type="text"
-                placeholder={mode === "signin" ? "Enter your username" : "Choose a username"}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                autoFocus
-              />
-            </div>
-
-            {/* Password Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input
-                ref={passwordRef}
-                type="password"
-                placeholder={mode === "signin" ? "Enter your password" : "Create a password"}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              />
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm animate-shake">
-                {error}
+          <div className="p-8">
+            {/* Header */}
+            <div className="flex flex-col items-center mb-8">
+              <div className="mb-3">
+                <LogoGifIcon />
               </div>
-            )}
-
-            {/* Success Message */}
-            {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-                ✓ Account created successfully! Switching to sign in...
-              </div>
-            )}
-
-            {/* Submit Button */}
-            <Button
-              onClick={handleSubmit}
-              loading={loading}
-              size="lg"
-              Variant="primary"
-              title={loading ? (mode === "signin" ? "Signing in..." : "Creating account...") : (mode === "signin" ? "Sign In" : "Sign Up")}
-              fullWidth={true}
-            />
-
-            {/* Terms (for signup only) */}
-            {mode === "signup" && (
-              <p className="text-gray-500 text-xs text-center">
-                By signing up, you agree to our Terms of Service and Privacy Policy
+              <h2 className="text-2xl font-bold text-surface-900">
+                {mode === "signin" ? "Welcome back" : "Create account"}
+              </h2>
+              <p className="text-surface-500 text-sm mt-1">
+                {mode === "signin" ? "Sign in to access your vault" : "Join NeuroVault today"}
               </p>
-            )}
-
-            {/* Divider */}
-            <div className="flex items-center my-4">
-              <div className="flex-1 border-t border-gray-200"></div>
-              <span className="px-4 text-gray-400 text-sm">or</span>
-              <div className="flex-1 border-t border-gray-200"></div>
             </div>
 
-            {/* Switch Mode Link */}
-            <div className="text-center">
-              <p className="text-gray-600 text-sm">
+            {/* Form */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-surface-700 mb-1.5">Username</label>
+                <input
+                  ref={usernameRef}
+                  type="text"
+                  placeholder={mode === "signin" ? "Enter your username" : "Choose a username"}
+                  className="input"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-surface-700 mb-1.5">Password</label>
+                <input
+                  ref={passwordRef}
+                  type="password"
+                  placeholder={mode === "signin" ? "Enter your password" : "Create a password (min 6 chars)"}
+                  className="input"
+                />
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm animate-shake">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  {error}
+                </div>
+              )}
+
+              {success && (
+                <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Account created! Switching to sign in...
+                </div>
+              )}
+
+              <Button
+                onClick={handleSubmit}
+                loading={loading}
+                size="lg"
+                Variant="primary"
+                title={loading ? (mode === "signin" ? "Signing in..." : "Creating account...") : (mode === "signin" ? "Sign In" : "Sign Up")}
+                fullWidth={true}
+              />
+
+              {mode === "signup" && (
+                <p className="text-surface-400 text-xs text-center">
+                  By signing up, you agree to our Terms of Service and Privacy Policy
+                </p>
+              )}
+
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-surface-200" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-white px-3 text-surface-400">or</span>
+                </div>
+              </div>
+
+              <p className="text-center text-sm text-surface-500">
                 {mode === "signin" ? "Don't have an account? " : "Already have an account? "}
                 <button
                   onClick={onSwitchMode}
-                  className="text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200"
+                  className="text-brand-600 hover:text-brand-700 font-semibold transition-colors duration-200"
                 >
                   {mode === "signin" ? "Sign Up" : "Sign In"}
                 </button>
@@ -209,42 +200,6 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
           </div>
         </div>
       </div>
-
-      {/* Custom Animations */}
-      <style>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        @keyframes modalSlideIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95) translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-          20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.2s ease-out;
-        }
-        .animate-modalSlideIn {
-          animation: modalSlideIn 0.3s ease-out;
-        }
-        .animate-shake {
-          animation: shake 0.5s;
-        }
-      `}</style>
     </>
   );
 }

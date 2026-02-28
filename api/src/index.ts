@@ -1,4 +1,5 @@
 import express from "express";
+import "./types.js";
 import z from "zod"
 import jwt from "jsonwebtoken"
 import { random } from "./utils.js";
@@ -54,7 +55,8 @@ app.post("/api/v1/signup", async (req, res) => {
     }
 
     
-    res.status(411).json({
+    console.error("Signup error:", e);
+    res.status(409).json({
       message: "User already exists",
     });
   }
@@ -95,6 +97,7 @@ app.post("/api/v1/signin", async (req, res) => {
       });
     }
 
+    console.error("Signin error:", e);
     res.status(500).json({ message: "Something went wrong" });
   }
 });
@@ -110,7 +113,6 @@ app.post("/api/v1/content",userMiddleware, async (req, res) => {
       type,
       title,
       content,
-      //@ts-ignore
       userId: req.userId,
       tags:[]
     })
@@ -120,7 +122,7 @@ app.post("/api/v1/content",userMiddleware, async (req, res) => {
 })
 
 app.get("/api/v1/content",userMiddleware, async (req, res) => {
-  //@ts-ignore
+
     const userId = req.userId;
     const content = await contentModel.find({
       userId:userId
@@ -133,7 +135,7 @@ app.get("/api/v1/content",userMiddleware, async (req, res) => {
 // Enhanced search endpoint with aggregation
 app.get("/api/v1/content/search", userMiddleware, async (req, res) => {
   try {
-    //@ts-ignore
+  
     const userId = req.userId;
     const { search, type, sortBy = 'createdAt', order = 'desc' } = req.query;
 
@@ -204,7 +206,7 @@ app.get("/api/v1/content/search", userMiddleware, async (req, res) => {
 // Analytics endpoint
 app.get("/api/v1/analytics", userMiddleware, async (req, res) => {
   try {
-    //@ts-ignore
+  
     const userId = req.userId;
 
     // Get content by type
@@ -241,7 +243,7 @@ app.put("/api/v1/content/:id", userMiddleware, async (req, res) => {
     await contentModel.updateOne(
       {
         _id: contentId,
-        //@ts-ignore
+      
         userId: req.userId
       },
       {
@@ -262,7 +264,7 @@ app.delete("/api/v1/content/:id", userMiddleware, async (req, res) => {
     const contentId = req.params.id;
     await contentModel.deleteOne({
       _id: contentId,
-      //@ts-ignore
+    
       userId: req.userId
     });
     res.json({
@@ -275,7 +277,7 @@ app.post("/api/v1/neuro/share",userMiddleware, async (req, res) =>{
     const share = req.body.share;
     if (share) {
       const existingLinks = await LinkModel.findOne({
-        //@ts-ignore
+      
         userId: req.userId
       });
       if (existingLinks) {
@@ -286,7 +288,7 @@ app.post("/api/v1/neuro/share",userMiddleware, async (req, res) =>{
       }
       const hash = random(10);
       await LinkModel.create({
-        //@ts-ignore
+      
         userId: req.userId,
         hash: hash
       })
@@ -295,7 +297,7 @@ app.post("/api/v1/neuro/share",userMiddleware, async (req, res) =>{
       })
     } else {
       await LinkModel.deleteOne({
-        //@ts-ignore
+      
         userId: req.userId
       });
       res.json({
@@ -347,7 +349,7 @@ app.post("/api/v1/content/:id/share", userMiddleware, async (req, res) => {
     // Verify content exists and belongs to user
     const content = await contentModel.findOne({
       _id: contentId,
-      //@ts-ignore
+    
       userId: req.userId
     });
     
@@ -373,7 +375,7 @@ app.post("/api/v1/content/:id/share", userMiddleware, async (req, res) => {
     await ContentShareModel.create({
       hash: hash,
       contentId: contentId,
-      //@ts-ignore
+    
       userId: req.userId
     });
     
@@ -425,4 +427,4 @@ app.get("/api/v1/content/shared/:shareLink", async (req, res) => {
 });
 
 
-app.listen(3000);
+app.listen(process.env.PORT || 3000);

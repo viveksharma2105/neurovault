@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/Button";
@@ -33,59 +32,54 @@ export function Signin() {
   }
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden flex items-center justify-center p-4">
-      {/* Animated Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-blue-600 to-teal-500"></div>
-      
-      {/* Animated Blobs */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
-      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
-      <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-teal-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen w-full relative overflow-hidden flex items-center justify-center p-4 bg-surface-900">
+      {/* Background orbs */}
+      <div className="absolute top-1/4 -left-32 w-72 h-72 bg-brand-500/20 rounded-full filter blur-3xl animate-float" />
+      <div className="absolute bottom-1/4 -right-32 w-72 h-72 bg-accent-violet/20 rounded-full filter blur-3xl animate-float-delayed" />
 
-      {/* Frosted Glass Login Box */}
-      <div className="relative w-full max-w-md">
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8 sm:p-10 transform transition-all duration-300 hover:scale-[1.02]">
-          {/* Logo and Heading */}
+      {/* Card */}
+      <div className="relative w-full max-w-md animate-slide-up">
+        <div className="bg-white rounded-2xl shadow-xl border border-surface-200 p-8 sm:p-10">
+          {/* Logo */}
           <div className="flex flex-col items-center mb-8">
-            <div className="mb-4 transform transition-transform hover:scale-110 duration-300">
+            <div className="mb-3 transition-transform duration-300 hover:scale-105">
               <LogoGifIcon />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-            <p className="text-white/80 text-center">Sign in to access your vault</p>
+            <h1 className="text-2xl font-bold text-surface-900">Welcome Back</h1>
+            <p className="text-surface-500 text-sm mt-1">Sign in to access your vault</p>
           </div>
 
           {/* Form */}
-          <div className="space-y-5">
-            {/* Username Input */}
-            <div className="relative group">
-              <label className="block text-sm font-medium text-white/90 mb-2">Username</label>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1.5">Username</label>
               <input
                 ref={usernameRef}
                 type="text"
                 placeholder="Enter your username"
-                className="w-full px-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all duration-300"
+                className="input"
               />
             </div>
 
-            {/* Password Input */}
-            <div className="relative group">
-              <label className="block text-sm font-medium text-white/90 mb-2">Password</label>
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1.5">Password</label>
               <input
                 ref={passwordRef}
                 type="password"
                 placeholder="Enter your password"
-                className="w-full px-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all duration-300"
+                className="input"
               />
             </div>
 
-            {/* Error Message */}
             {error && (
-              <div className="bg-red-500/20 backdrop-blur-sm border border-red-400/50 text-red-100 px-4 py-3 rounded-xl text-sm animate-shake">
+              <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm animate-shake">
+                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
                 {error}
               </div>
             )}
 
-            {/* Sign In Button */}
             <Button
               onClick={signin}
               loading={loading}
@@ -96,63 +90,36 @@ export function Signin() {
             />
 
             {/* Divider */}
-            <div className="flex items-center my-6">
-              <div className="flex-1 border-t border-white/30"></div>
-              <span className="px-4 text-white/70 text-sm">or</span>
-              <div className="flex-1 border-t border-white/30"></div>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-surface-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-3 text-surface-400">or</span>
+              </div>
             </div>
 
-            {/* Sign Up Link */}
-            <div className="text-center">
-              <p className="text-white/80 text-sm">
-                Don't have an account?{" "}
-                <button
-                  onClick={() => navigate("/signup")}
-                  className="text-yellow-200 hover:text-yellow-100 font-semibold transition-colors duration-300 hover:underline"
-                >
-                  Sign Up
-                </button>
-              </p>
-            </div>
+            <p className="text-center text-sm text-surface-500">
+              Don't have an account?{" "}
+              <button
+                onClick={() => navigate("/signup")}
+                className="text-brand-600 hover:text-brand-700 font-semibold transition-colors duration-200"
+              >
+                Sign Up
+              </button>
+            </p>
 
-            {/* Back to Home */}
-            <div className="text-center pt-2">
+            <div className="text-center pt-1">
               <button
                 onClick={() => navigate("/")}
-                className="text-white/70 hover:text-white text-sm transition-colors duration-300"
+                className="text-surface-400 hover:text-surface-600 text-sm transition-colors duration-200"
               >
-                ← Back to Home
+                &larr; Back to Home
               </button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Custom Animations */}
-      <style>{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-          20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-        .animate-shake {
-          animation: shake 0.5s;
-        }
-      `}</style>
     </div>
   );
 }
